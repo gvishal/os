@@ -190,6 +190,7 @@ char
         if(buf[0] == EOF)
             break;
     }
+    return "None";
 }
 
 char* readable_fs(double size/*in bytes*/,char *buf) {
@@ -258,14 +259,24 @@ void epoch_to_date_time(date_time_t* date_time,unsigned int epoch)
 void
 Detail(char *details, struct stat sb, int flag_h){
     int de=0;
-    if(S_ISDIR(sb.st_mode)){
-        details[de++] = 'd';
-    }
-    else if(S_ISLNK(sb.st_mode)){
-        details[de++] = 'l';
-    }
-    else if(S_ISREG(sb.st_mode)){
-        details[de++] = '-';
+    // if(S_ISDIR(sb.st_mode)){
+    //     details[de++] = 'd';
+    // }
+    // else if(S_ISLNK(sb.st_mode)){
+    //     details[de++] = 'l';
+    // }
+    // else if(S_ISREG(sb.st_mode)){
+    //     details[de++] = '-';
+    // }
+    switch (sb.st_mode & S_IFMT) {
+    case S_IFBLK:  details[de++] = 'b';break;
+    case S_IFCHR:  details[de++] = 'c';break;
+    case S_IFLNK:  details[de++] = 'l';break;
+    case S_IFDIR:  details[de++] = 'd';break;
+    case S_IFIFO:  details[de++] = 'p';break;
+    case S_IFREG:  details[de++] = '-';break;
+    case S_IFSOCK: details[de++] = 's';break;
+    default:       details[de++] = '-';break;
     }
     if(sb.st_mode & S_IRUSR){
         details[de++] = 'r';
@@ -317,8 +328,8 @@ Detail(char *details, struct stat sb, int flag_h){
     de = Strlen(details);
     details[de++] = ' ';
     details[de] = '\0';
-    de = Strlen(details);
-
+    de = Strlen(details);   
+    
     Strcat(&details[de], Getname(sb.st_gid, name));
     de = Strlen(details);
     details[de++] = ' ';
@@ -367,7 +378,7 @@ Detail(char *details, struct stat sb, int flag_h){
 void 
 main(int argc,char *argv[])
 {   
-    int flag_l=0,flag_a=0,flag_h=0;
+    int flag_l=0,flag_a=0,flag_h=0,print_true=0;
     char *options,*path;
     //for getdents
     int fd, nread;
@@ -420,6 +431,7 @@ main(int argc,char *argv[])
 
         for (bpos = 0; bpos < nread;) {
             d = (struct linux_dirent *) (buf + bpos);
+            print_true = 0;
             complete_path[0] = '\0';
             Strcat(complete_path, path);
             if(path[0] != '.'){
@@ -432,10 +444,29 @@ main(int argc,char *argv[])
             }
             //printf("%s\n", complete_path );
 
-            if (stat(complete_path, &sb) == -1)
+            if (lstat(complete_path, &sb) == -1)
                 handle_error("stat");
 
             if(!flag_a && d->d_name[0] != '.'){
+                print_true = 1;
+                // if(flag_l){
+                //     Detail(details, sb, flag_h);
+                //     printf("%s ", details);
+                // }
+                // if(S_ISDIR(sb.st_mode)){
+                //     printf(ANSI_COLOR_YELLOW);
+                //     printf("%s\n", (char *) d->d_name);
+                //     printf(ANSI_COLOR_RESET);
+                // }
+                // else
+                //     printf("%s\n", (char *) d->d_name);
+            }
+            else if(flag_a){
+                print_true = 1;
+                //same as above;
+            }
+            if(print_true){
+
                 if(flag_l){
                     Detail(details, sb, flag_h);
                     printf("%s ", details);
@@ -445,16 +476,23 @@ main(int argc,char *argv[])
                     printf("%s\n", (char *) d->d_name);
                     printf(ANSI_COLOR_RESET);
                 }
-                else
-                    printf("%s\n", (char *) d->d_name);
-            }
-            else if(flag_a){
-                if(flag_l){
-                    Detail(details, sb, flag_h);
-                    printf("%s ", details);
+                else if(S_ISLNK(sb.st_mode)){
+                    char linkname[sb.st_size + 1];
+                    ssize_t r;
+                    printf(ANSI_COLOR_CYAN);
+                    printf("%s -> ",(char *)d->d_name);
+                    printf(ANSI_COLOR_RESET);
+
+                    r = readlink(complete_path, linkname, sb.st_size + 1);
+                    if (r < 0)
+                       handle_error("lstat");
+                    if (r > sb.st_size)
+                       handle_error("symlink increased in size ");
+                    linkname[sb.st_size] = '\0';
+                    printf("%s\n",linkname);
                 }
-                if(S_ISDIR(sb.st_mode)){
-                    printf(ANSI_COLOR_YELLOW);
+                else if(S_ISSOCK(sb.st_mode)){
+                    printf(ANSI_COLOR_MAGENTA);
                     printf("%s\n", (char *) d->d_name);
                     printf(ANSI_COLOR_RESET);
                 }
