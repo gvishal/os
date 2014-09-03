@@ -164,12 +164,10 @@ char
     char info[4][100];
     char buf[2];
     char *cid = itoa(id);
-    // printf("%s\n", cid);
     fd = open(passwd_file, O_RDONLY);
     if(fd == -1)
         handle_error("Directory does not exist or no permissions");
     while((n = read(fd, buf, 1)) > 0){
-        //printf("%c", buf[0]);
         if(i<4 && buf[0] == ':'){
             info[i][pos]='\0';
             i++;
@@ -195,12 +193,23 @@ char
 
 char* readable_fs(double size/*in bytes*/,char *buf) {
     int i = 0;
+    unsigned int s=size,r;
     const char* units[] = {"", "K", "M", "G", "T", "P", "E", "Z", "Y"};
-    while (size > 1024) {
-        size /= 1024;
+    // while (size > 1024) {
+    //     size /= 1024;
+    //     i++;
+    // }
+    //sprintf(buf, "%.*f%s", i, size, units[i]);//remove this
+    while(s > 1024){
+        r = s % 1024;
+        s /= 1024;
         i++;
     }
-    sprintf(buf, "%.*f%s", i, size, units[i]);
+    buf[0] = '\0';
+    Strcat(buf, itoa(s));
+    Strcat(buf, ".");
+    Strcat(buf, itoa(r));
+    Strcat(buf, units[i]);
     return buf;
 }
 
@@ -323,7 +332,7 @@ Detail(char *details, struct stat sb, int flag_h){
     details[de++] = ' ';
     details[de] = '\0';
 
-    char name[100];
+    char name[50];
     Strcat(&details[de], Getname(sb.st_uid, name));
     de = Strlen(details);
     details[de++] = ' ';
@@ -436,52 +445,39 @@ main(int argc,char *argv[])
             Strcat(complete_path, path);
             if(path[0] != '.'){
                 Strcat(complete_path, "/");
-                // printf("%s\n", complete_path );
                 Strcat(complete_path, d->d_name);
             }
             else{
                 Strcpy(complete_path, d->d_name);
             }
-            //printf("%s\n", complete_path );
 
             if (lstat(complete_path, &sb) == -1)
                 handle_error("stat");
 
             if(!flag_a && d->d_name[0] != '.'){
                 print_true = 1;
-                // if(flag_l){
-                //     Detail(details, sb, flag_h);
-                //     printf("%s ", details);
-                // }
-                // if(S_ISDIR(sb.st_mode)){
-                //     printf(ANSI_COLOR_YELLOW);
-                //     printf("%s\n", (char *) d->d_name);
-                //     printf(ANSI_COLOR_RESET);
-                // }
-                // else
-                //     printf("%s\n", (char *) d->d_name);
             }
             else if(flag_a){
                 print_true = 1;
-                //same as above;
             }
             if(print_true){
 
                 if(flag_l){
                     Detail(details, sb, flag_h);
-                    printf("%s ", details);
+                    Print(details, 0);
                 }
                 if(S_ISDIR(sb.st_mode)){
-                    printf(ANSI_COLOR_YELLOW);
-                    printf("%s\n", (char *) d->d_name);
-                    printf(ANSI_COLOR_RESET);
+                    Print(ANSI_COLOR_YELLOW, 0);
+                    Print(d->d_name, 0);
+                    Print(ANSI_COLOR_RESET,1);
                 }
                 else if(S_ISLNK(sb.st_mode)){
                     char linkname[sb.st_size + 1];
                     ssize_t r;
-                    printf(ANSI_COLOR_CYAN);
-                    printf("%s -> ",(char *)d->d_name);
-                    printf(ANSI_COLOR_RESET);
+                    Print(ANSI_COLOR_CYAN, 0);
+                    Print(d->d_name, 0);
+                    Print(" -> ", 0);
+                    Print(ANSI_COLOR_RESET ,0);
 
                     r = readlink(complete_path, linkname, sb.st_size + 1);
                     if (r < 0)
@@ -489,15 +485,15 @@ main(int argc,char *argv[])
                     if (r > sb.st_size)
                        handle_error("symlink increased in size ");
                     linkname[sb.st_size] = '\0';
-                    printf("%s\n",linkname);
+                    Print(linkname, 1);
                 }
                 else if(S_ISSOCK(sb.st_mode)){
-                    printf(ANSI_COLOR_MAGENTA);
-                    printf("%s\n", (char *) d->d_name);
-                    printf(ANSI_COLOR_RESET);
+                    Print(ANSI_COLOR_MAGENTA, 0);
+                    Print(d->d_name, 0);
+                    Print(ANSI_COLOR_RESET, 1);
                 }
                 else
-                    printf("%s\n", (char *) d->d_name);
+                    Print(d->d_name, 1);
             }
 
             bpos += d->d_reclen;
