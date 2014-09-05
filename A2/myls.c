@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <limits.h>
-//#include "loc_time.h"
 
 #define BUFFSIZE 8192
 #define BUF_SIZE 1024
@@ -268,15 +267,6 @@ void epoch_to_date_time(date_time_t* date_time,unsigned int epoch)
 void
 Detail(char *details, struct stat sb, int flag_h){
     int de=0;
-    // if(S_ISDIR(sb.st_mode)){
-    //     details[de++] = 'd';
-    // }
-    // else if(S_ISLNK(sb.st_mode)){
-    //     details[de++] = 'l';
-    // }
-    // else if(S_ISREG(sb.st_mode)){
-    //     details[de++] = '-';
-    // }
     switch (sb.st_mode & S_IFMT) {
     case S_IFBLK:  details[de++] = 'b';break;
     case S_IFCHR:  details[de++] = 'c';break;
@@ -415,7 +405,7 @@ main(int argc,char *argv[])
     }
     else if(argc > 1 && argv[1][0] == '-'){
         options = argv[1];
-        if(argc == 3)path = argv[2];
+        if(argc >= 3)path = argv[2];
         else path = ".";
     }
     else if(argc > 2 && argv[2][0] == '-'){
@@ -496,6 +486,11 @@ main(int argc,char *argv[])
                     linkname[sb.st_size] = '\0';
                     Print(linkname, 1);
                 }
+                else if(sb.st_mode & S_IXUSR){
+                    Print(ANSI_COLOR_GREEN, 0);
+                    Print(d->d_name, 0);
+                    Print(ANSI_COLOR_RESET,1);
+                }
                 else if(S_ISSOCK(sb.st_mode)){
                     Print(ANSI_COLOR_MAGENTA, 0);
                     Print(d->d_name, 0);
@@ -504,7 +499,6 @@ main(int argc,char *argv[])
                 else
                     Print(d->d_name, 1);
             }
-
             bpos += d->d_reclen;
         }
     }
