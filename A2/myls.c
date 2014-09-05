@@ -260,9 +260,9 @@ void epoch_to_date_time(date_time_t* date_time,unsigned int epoch)
             break;
     }
 
-    date_time->year  = years+year;
-    date_time->month = month+1;
-    date_time->day   = epoch-days[year][month]+1;
+    date_time->year  = years + year;
+    date_time->month = month + 1;
+    date_time->day   = epoch - days[year][month]+1;
 }
 
 void
@@ -371,17 +371,26 @@ Detail(char *details, struct stat sb, int flag_h){
     details[de] = '\0';
     de = Strlen(details);
 
-    Strcat(&details[de], itoa(date_time.hour));
-    de = Strlen(details);
-    details[de++] = ':';
-    details[de] = '\0';
-    de = Strlen(details);
+    if(1970 + date_time.year < 2014){
+        Strcat(&details[de], itoa(1970 + date_time.year));
+        de = Strlen(details);
+        details[de++] = ' ';
+        details[de] = '\0';
+        de = Strlen(details);
+    }
+    else{
+        Strcat(&details[de], itoa(date_time.hour));
+        de = Strlen(details);
+        details[de++] = ':';
+        details[de] = '\0';
+        de = Strlen(details);
 
-    Strcat(&details[de], itoa(date_time.minute));
-    de = Strlen(details);
-    details[de++] = ' ';
-    details[de] = '\0';
-    de = Strlen(details);
+        Strcat(&details[de], itoa(date_time.minute));
+        de = Strlen(details);
+        details[de++] = ' ';
+        details[de] = '\0';
+        de = Strlen(details);
+    }
 }
 
 void 
