@@ -137,6 +137,7 @@ int main(int argc, char *argv[]){
     char *pid;
     char process_file[100] = "/proc/";
     char process_info[30][100];
+    int i;
     if(argc == 1){
         handle_error("No pid specified");
     }
@@ -150,13 +151,14 @@ int main(int argc, char *argv[]){
 
     Getdetails(process_file, (char *)process_info);
 
-    Print(process_info[1], 1);
-    Print(process_info[5], 1);
-
-    if(Match(process_info[11], "Threads") > -1)
-        Print(process_info[11], 1);
-    else
-        Print(process_info[23], 1);
+    for(i=0; i<30; i++){
+        if(Match(process_info[i], "State") > -1)
+            Print(process_info[i], 1);
+        if(Match(process_info[i], "PPid") > -1)
+            Print(process_info[i], 1);
+        if(Match(process_info[i], "Threads") > -1)
+            Print(process_info[i], 1);
+    }
 
     return 0;
 }
