@@ -1,0 +1,10 @@
+A1_4.c
+A1_5.c
+A1_6.c
+A2.c
+A3.c
+a.out
+assignment3.tar.gz
+out
+out.txt
+report.odt
