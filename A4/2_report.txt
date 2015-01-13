@@ -1,0 +1,13 @@
+Iterative 
+
+100X100
+Page faults
+82 faults
+
+TLB Hit Ratio
+577 dTLB-loads-misses
+2,12,67,318 dTLB-loads
+ratio - 99.99728699055548
+
+Strassen
+
